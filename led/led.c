@@ -18,13 +18,14 @@ int main(void) {
     struct gpiod_request_config *request_config;
     uint8_t result, n;
 
-    printf("open chip.\n");
+    // open chip
     chip = gpiod_chip_open("/dev/gpiochip0");
     if (!chip) {
         perror("failed to open chip.");
         return 1;
     }
 
+    // line settings
     line_settings = gpiod_line_settings_new();
     if (!line_settings) {
         perror("failed to creating new line settings object.");
@@ -46,6 +47,7 @@ int main(void) {
         return 1;
     }
 
+    // configure line
     line_config = gpiod_line_config_new();
     if (!line_config) {
         perror("failed to create new line");
@@ -62,6 +64,7 @@ int main(void) {
         return 1;
     }
 
+    // configure request
     request_config = gpiod_request_config_new();
     if (!request_config) {
         perror("failed to create request config.");
@@ -72,6 +75,7 @@ int main(void) {
     }
     gpiod_request_config_set_consumer(request_config, CONSUMER);
     
+    // request lines
     request = gpiod_chip_request_lines(chip, request_config, line_config);
     if (!request) {
         perror("request for lines failed.");
@@ -81,14 +85,13 @@ int main(void) {
         gpiod_chip_close(chip);
     }
 
+    // logic
     for (n = 0; n < 10; n++) {
-        printf("state: HIGH.\n");
         if (gpiod_line_request_set_value(request, GPIO_PIN, GPIOD_LINE_VALUE_ACTIVE)) {
             perror("failed to change GPIO pin state");
         }
         sleep(1);
         
-        printf("state: LOW.\n");
         if (gpiod_line_request_set_value(request, GPIO_PIN, GPIOD_LINE_VALUE_INACTIVE)) {
             perror("failed to change GPIO pin state");
         }
