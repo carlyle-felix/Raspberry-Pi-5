@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <gpiod.h>
 
 #include "../include/raspin-manager.h"
+#include "../include/gpiod-utils.h"
 
 struct line {
     uint8_t pin;
@@ -70,6 +73,43 @@ Line_list add_pin(Line_list rpi, const uint8_t pin, const int8_t gpio, const cha
     return rpi;
 }
 
+Line_list get_line_info(const char *chip_dev, Line_list rpi)
+{
+    Gpio_pin_info pin;
+    Line_list rpi_temp;
+
+    for (rpi_temp = rpi; rpi_temp; rpi_temp = rpi_temp->next) {
+        if (rpi_temp->gpio < 0) {
+            continue;
+        }
+        pin = line_info(chip_dev, rpi_temp->gpio);
+        if (!pin) {
+            perror("failed to get line info in get_line_info()");
+            return NULL;
+        }
+        
+        if (pin->consumer) {
+            rpi_temp->consumer = malloc(strlen(pin->consumer) + 1);
+            if (!rpi_temp->consumer) {
+                perror("failed to allocate memory for consumer in get_line_info()");
+                return NULL;
+            }
+            strcpy(rpi_temp->consumer, pin->consumer);
+        } else {
+            rpi_temp->consumer = malloc(strlen(NO_CONSUMER) + 1);
+            if (!rpi_temp->consumer) {
+                perror("failed to allocate memory for consumer in get_line_info()");
+                return NULL;
+            }
+            strcpy(rpi_temp->consumer, NO_CONSUMER);
+        }
+        release_line_info_items(pin);
+        pin = NULL;
+    }
+    
+    return rpi;
+}
+
 void free_line_list(Line_list rpi)
 {
     Line_list rpi_temp;
@@ -95,11 +135,12 @@ Line_list populate_pins(void)
     return rpi;
 }
 
-void print_pins(Line_list rpi, enum print format)
+void print_pins(const char *chip_dev, Line_list rpi, enum print format)
 {
     Line_list temp;
     uint8_t count;
 
+    rpi = get_line_info(chip_dev, rpi);
 
     printf("\n");
     switch (format) {
@@ -107,11 +148,11 @@ void print_pins(Line_list rpi, enum print format)
             printf(" pin\t gpio\t function\n\n");
             for (temp = rpi; temp; temp = temp->next) {
                 if (temp->gpio >= 0 && temp->line_fx) {
-                    printf("%4.2d\t%4d\t%8s\n", temp->pin, temp->gpio, temp->line_fx);
+                    printf("%4.2d\t%4d\t%8s\t%s\n", temp->pin, temp->gpio, temp->line_fx, temp->consumer);
                 } else if (temp->gpio >= 0) {
-                    printf("%4.2d\t%4d\t%8s\n", temp->pin, temp->gpio, "---");
+                    printf("%4.2d\t%4d\t%8s\t%s\n", temp->pin, temp->gpio, "---", temp->consumer);
                 } else if (temp->line_fx) {
-                    printf("%4.2d\t%4s\t%8s\n", temp->pin, "---", temp->line_fx);
+                    printf("%4.2d\t%4s\t%8s\t\n", temp->pin, "---", temp->line_fx);
                 }
             }
             break;

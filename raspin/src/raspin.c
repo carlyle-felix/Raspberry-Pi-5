@@ -3,6 +3,8 @@
 
 #include "../include/raspin-manager.h"
 
+#define CHIP "/dev/gpiochip0"
+
 int main(int argc, char *argv[]) {
     Line_list rpi;
 
@@ -23,9 +25,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (!strcmp(argv[1], "list")) {
-        print_pins(rpi, PRINT_LIST);
+        print_pins(CHIP, rpi, PRINT_LIST);
     } else if (!strcmp(argv[1], "layout")) {
-        print_pins(rpi, PRINT_LAYOUT);
+        print_pins(CHIP, rpi, PRINT_LAYOUT);
     } else {
         printf("unkown option: %s, try --help\n", argv[1]);
     }
