@@ -1,14 +1,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../include/gpiod-utils.h"
 #include "../include/raspin-manager.h"
 
 int main(int argc, char *argv[]) {
     Line_list rpi;
 
-    if (argc == 1) {
-        printf("idk what to do.\n");
+    if (argc == 1 || !strcmp(argv[1], "--help")) {
+        printf("raspin:\tprint a list or layout of physical pins with corresponding gpio lines and fuctions.\n");
+        printf("\n");
+        printf("raspin [option]\n");
+        printf("\n");
+        printf("options:\n");
+        printf("\tlist\t\tprint list of pins with corresponding gpio lines and funtions\n");
+        printf("\tlayout\t\tprint layout of pins with corresponding gpio lines and funtions.\n");
         return 1;
     }
 
@@ -20,7 +25,9 @@ int main(int argc, char *argv[]) {
     if (!strcmp(argv[1], "list")) {
         print_pins(rpi, PRINT_LIST);
     } else if (!strcmp(argv[1], "layout")) {
-        printf("slow down, tiger.\n");
+        print_pins(rpi, PRINT_LAYOUT);
+    } else {
+        printf("unkown option: %s, try --help\n", argv[1]);
     }
     free_line_list(rpi);
     

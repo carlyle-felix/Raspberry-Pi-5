@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "../include/raspin-manager.h"
-#include "../include/gpiod-utils.h"
 
 struct line {
     uint8_t pin;
@@ -32,7 +31,7 @@ Line_list new_list(void)
         return NULL;
     }
     rpi->pin = 0;
-    rpi->gpio = -2;
+    rpi->gpio = -1;
     rpi->line_fx = NULL;
     rpi->consumer = NULL;
     rpi->next = NULL;
@@ -99,18 +98,48 @@ Line_list populate_pins(void)
 void print_pins(Line_list rpi, enum print format)
 {
     Line_list temp;
+    uint8_t count;
 
-    // test
-    if (!format) {
-        printf("\n pin\t gpio\t function\n\n");
-        for (temp = rpi; temp; temp = temp->next) {
-            if (temp->gpio >= 0 && temp->line_fx) {
-                printf("%4.2d\t%4d\t%8s\n", temp->pin, temp->gpio, temp->line_fx);
-            } else if (temp->gpio >= 0) {
-                printf("%4.2d\t%4d\t%8s\n", temp->pin, temp->gpio, "---");
-            } else if (temp->line_fx) {
-                printf("%4.2d\t%4s\t%8s\n", temp->pin, "---", temp->line_fx);
+
+    printf("\n");
+    switch (format) {
+        case PRINT_LIST:
+            printf(" pin\t gpio\t function\n\n");
+            for (temp = rpi; temp; temp = temp->next) {
+                if (temp->gpio >= 0 && temp->line_fx) {
+                    printf("%4.2d\t%4d\t%8s\n", temp->pin, temp->gpio, temp->line_fx);
+                } else if (temp->gpio >= 0) {
+                    printf("%4.2d\t%4d\t%8s\n", temp->pin, temp->gpio, "---");
+                } else if (temp->line_fx) {
+                    printf("%4.2d\t%4s\t%8s\n", temp->pin, "---", temp->line_fx);
+                }
             }
-        }
+            break;
+
+        case PRINT_LAYOUT:
+            for(count = 0, temp = rpi; temp; temp = temp->next, count++) {
+                if (!(count % 2)) {
+                    if (temp->gpio >= 0 && temp->line_fx) {
+                        printf("%18s\tGPIO %2d\t[%.2d] ", temp->line_fx, temp->gpio, temp->pin);
+                    } else if (temp->gpio >= 0) {
+                        printf("\t\t\tGPIO %2d\t[%.2d] ", temp->gpio, temp->pin);
+                    } else if (temp->line_fx) {
+                        printf("%31s\t[%.2d] ", temp->line_fx, temp->pin);
+                    }
+                } else {
+                    if (temp->gpio >= 0 && temp->line_fx) {
+                        printf("[%.2d] GPIO %2d      %s\n", temp->pin, temp->gpio, temp->line_fx);
+                    } else if (temp->gpio >= 0) {
+                        printf("[%.2d] GPIO %d\n", temp->pin, temp->gpio);
+                    } else if (temp->line_fx) {
+                        printf("[%.2d] %s\n", temp->pin, temp->line_fx);
+                    }
+                }
+            }
+            break;
+
+        default:
+            break;
     }
+    printf("\n");
 }

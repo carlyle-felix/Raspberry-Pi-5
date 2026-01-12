@@ -1,6 +1,8 @@
 #ifndef RPINS_H
 #define RPINS_H
 
+#include <stdint.h>
+
 typedef struct line *Line_list;
 enum print {PRINT_LIST, PRINT_LAYOUT};
 
