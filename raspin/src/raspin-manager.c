@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
-#include "../include/rpins.h"
+#include "../include/raspin-manager.h"
+#include "../include/gpiod-utils.h"
 
-enum print {PRINT_LIST, PRINT_LAYOUT};
 struct line {
     uint8_t pin;
     int8_t gpio;
@@ -97,7 +96,7 @@ Line_list populate_pins(void)
     return rpi;
 }
 
-int print_pins(Line_list rpi, enum print format)
+void print_pins(Line_list rpi, enum print format)
 {
     Line_list temp;
 
@@ -114,6 +113,4 @@ int print_pins(Line_list rpi, enum print format)
             }
         }
     }
-
-    return 0;
 }
