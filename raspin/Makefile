@@ -1,6 +1,6 @@
 FLAGS =	-Wall -Wextra -g
 
-raspin: raspin.o raspin-manager.o gpiod-utils.o
+raspin: raspin.o raspin-manager.o
 	gcc -o raspin src/raspin.c src/raspin-manager.c ${FLAGS}
 
 raspin.o: src/raspin.c include/raspin-manager.h
