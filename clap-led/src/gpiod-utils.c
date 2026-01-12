@@ -64,19 +64,19 @@ Gpio_pin new_line(const unsigned int gpio_line, const char *consumer)
 
     note: return variable must be freed by caller with release_line_items().
 */
-struct gpiod_line_request *pin_setup(struct gpiod_chip *chip, Gpio_pin *pin, enum gpiod_line_direction direction, enum gpiod_line_value initial_state)
+struct gpiod_line_request *line_request(struct gpiod_chip *chip, Gpio_pin *pin, enum gpiod_line_direction direction, enum gpiod_line_value initial_state)
 {
     (*pin)->line_settings = line_state(direction, initial_state);
     if (!((*pin)->line_settings)) {
         return NULL;
     }
 
-    (*pin)->line_config = configure_lines(pin);
+    (*pin)->line_config = configure_line(pin);
     if (!((*pin)->line_config)) {
         return NULL;
     }
 
-    (*pin)->request = request_lines(chip, pin);
+    (*pin)->request = request(chip, pin);
     if (!((*pin)->request)) {
         return NULL;
     }
@@ -164,7 +164,7 @@ struct gpiod_line_settings *line_state(enum gpiod_line_direction direction, enum
 
     note: return struct must be freed by caller with gpiod_line_config_free().
 */
-struct gpiod_line_config *configure_lines(Gpio_pin *pin)
+struct gpiod_line_config *configure_line(Gpio_pin *pin)
 {
     struct gpiod_line_config *line_config;
     uint8_t result;
@@ -194,7 +194,7 @@ struct gpiod_line_config *configure_lines(Gpio_pin *pin)
         return struct must be freed by caller with gpiod_line_request_release().
         `pin` must be freed by caller with release_line_items().
 */
-struct gpiod_line_request *request_lines(struct gpiod_chip *chip, Gpio_pin *pin)
+struct gpiod_line_request *request(struct gpiod_chip *chip, Gpio_pin *pin)
 {
     struct gpiod_line_request *request;
 

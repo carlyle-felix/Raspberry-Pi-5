@@ -27,7 +27,7 @@ int main(void)
         gpiod_chip_close(chip);
         return 1;
     }
-    sensor_request = pin_setup(chip, &sensor, GPIOD_LINE_DIRECTION_INPUT, GPIOD_LINE_VALUE_INACTIVE);
+    sensor_request = line_request(chip, &sensor, GPIOD_LINE_DIRECTION_INPUT, GPIOD_LINE_VALUE_INACTIVE);
     if (!sensor) {
         release_line_items(sensor);
         gpiod_chip_close(chip);
@@ -40,7 +40,7 @@ int main(void)
         gpiod_chip_close(chip);
         return 1;
     }
-    led_request = pin_setup(chip, &led, GPIOD_LINE_DIRECTION_OUTPUT, GPIOD_LINE_VALUE_INACTIVE);
+    led_request = line_request(chip, &led, GPIOD_LINE_DIRECTION_OUTPUT, GPIOD_LINE_VALUE_INACTIVE);
     if (!led) {
         release_line_items(led);
         release_line_items(sensor);
