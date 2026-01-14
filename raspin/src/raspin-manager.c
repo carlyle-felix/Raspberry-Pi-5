@@ -170,11 +170,13 @@ void print_pins(const char *chip_dev, Line_list rpi, enum print format)
                     printf("%8s\t", rpi_temp->consumer);
                     printf("%s\n", rpi_temp->state ? "used" : "not used");
                 } else if (rpi_temp->line_fx) {
-                    printf("%4.2d\t", rpi_temp->pin);
-                    printf("%4s\t", "---");
-                    printf("%8s\t", rpi_temp->line_fx);
-                    printf("%8s\t", "");
-                    printf("%s\n", rpi_temp->state ? "used" : "not used");
+                    if (!strcmp(rpi_temp->line_fx, "GND")) {
+                        printf(DGRAY_BG);
+                    } else {
+                        printf(RED_BG);
+                    }
+                    printf("%4.2d", rpi_temp->pin);
+                    printf("%20s\n", rpi_temp->line_fx);
                 }
             }
             break;
