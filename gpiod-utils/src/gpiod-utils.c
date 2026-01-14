@@ -12,6 +12,9 @@ struct gpio_pin {
     struct gpiod_line_request *request;
 };
 
+/*
+    wrapped malloc
+*/
 void *mem_alloc(uint32_t size)
 {
     void *p = malloc(size);
@@ -107,6 +110,9 @@ void release_line_items(Gpio_pin pin)
     free(pin);
 }
 
+/*
+    free pin info struct
+*/
 void release_line_info_items(Gpio_pin_info pin)
 {
     free(pin->consumer);
@@ -227,6 +233,14 @@ struct gpiod_line_request *request(struct gpiod_chip *chip, Gpio_pin *pin)
     return request;
 }
 
+
+/*
+    get line info.
+
+    parameters:
+    `chip_dev`: chip name (/dev/gpiochipX).
+    `gpio_line`: gpio line number for info collection.
+*/
 Gpio_pin_info line_info(const char *chip_dev, const uint8_t gpio_line)
 {
     struct gpiod_chip *chip;
