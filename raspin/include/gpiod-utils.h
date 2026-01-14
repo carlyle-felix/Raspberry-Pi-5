@@ -9,6 +9,7 @@
 
 typedef struct gpio_pin *Gpio_pin;
 typedef struct gpio_pin_info {
+    bool state;
     char *consumer;
 } *Gpio_pin_info;
 

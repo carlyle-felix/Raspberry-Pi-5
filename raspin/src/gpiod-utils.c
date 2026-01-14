@@ -252,6 +252,8 @@ Gpio_pin_info line_info(const char *chip_dev, const uint8_t gpio_line)
         return NULL;
     }
 
+    pin->state = gpiod_line_info_is_used(info);
+
     const char *str = gpiod_line_info_get_consumer(info);
     if (str) {
         pin->consumer = mem_alloc(strlen(str) + 1);
