@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <gpiod.h>
 
 #include "../include/raspin-manager.h"
 #include "../include/gpiod-utils.h"

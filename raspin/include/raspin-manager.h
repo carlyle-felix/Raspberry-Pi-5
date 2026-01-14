@@ -1,8 +1,6 @@
 #ifndef RPINS_H
 #define RPINS_H
 
-#include <stdint.h>
-
 #define NO_CONSUMER ""
 
 typedef struct line *Line_list;
