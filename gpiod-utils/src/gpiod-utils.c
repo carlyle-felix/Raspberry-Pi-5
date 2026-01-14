@@ -12,6 +12,16 @@ struct gpio_pin {
     struct gpiod_line_request *request;
 };
 
+void *mem_alloc(uint32_t size)
+{
+    void *p = malloc(size);
+    if (!p) {
+        perror("failed to allocate memory in mem_alloc()");
+        return NULL;
+    }
+
+    return p;
+}
 /*
     create new line data list for pin.
 
@@ -23,24 +33,21 @@ struct gpio_pin {
 */
 Gpio_pin new_line(const unsigned int gpio_line, const char *consumer)
 {
-    Gpio_pin pin = malloc(sizeof(struct gpio_pin));
+    Gpio_pin pin = mem_alloc(sizeof(struct gpio_pin));
     if (!pin) {
-        perror("failed to allocate space for pin data list");
         return NULL;
     }
 
     pin->gpio_line[0] = gpio_line;
     if (consumer) {
-        pin->consumer = malloc(strlen(consumer) + 1);
+        pin->consumer = mem_alloc(strlen(consumer) + 1);
         if (!pin->consumer) {
-            perror("failed to allocate memory for pin->consumer");
             return NULL;
         }
         strcpy(pin->consumer, consumer);
     } else {
-        pin->consumer = malloc(strlen(DEFAULT_CONSUMER) + 1);
+        pin->consumer = mem_alloc(strlen(DEFAULT_CONSUMER) + 1);
         if (!pin->consumer) {
-            perror("failed to allocate memory for pin->consumer");
             return NULL;
         }
         strcpy(pin->consumer, DEFAULT_CONSUMER);
@@ -100,6 +107,12 @@ void release_line_items(Gpio_pin pin)
     free(pin);
 }
 
+void release_line_info_items(Gpio_pin_info pin)
+{
+    free(pin->consumer);
+    free(pin);
+}
+
 /*
     open gpio chip.
 
@@ -108,7 +121,7 @@ void release_line_items(Gpio_pin pin)
 
     note: return struct must be freed by caller with gpiod_chip_close().
 */
-struct gpiod_chip *chip_open(const char *str)
+struct gpiod_chip *open_chip(const char *str)
 {
     struct gpiod_chip *chip;
 
@@ -212,4 +225,50 @@ struct gpiod_line_request *request(struct gpiod_chip *chip, Gpio_pin *pin)
     }
 
     return request;
+}
+
+Gpio_pin_info line_info(const char *chip_dev, const uint8_t gpio_line)
+{
+    struct gpiod_chip *chip;
+    struct gpiod_line_info *info;
+    Gpio_pin_info pin;
+
+    chip = open_chip(chip_dev);
+    if (!chip) {
+        return NULL;
+    }
+
+    info = gpiod_chip_get_line_info(chip, gpio_line);
+    if (!info) {
+        perror("failed to get snapshot of line info");
+        gpiod_chip_close(chip);
+        return NULL;
+    }
+
+    pin = mem_alloc(sizeof(struct gpio_pin_info));
+    if (!pin) {
+        gpiod_chip_close(chip);
+        gpiod_line_info_free(info);
+        return NULL;
+    }
+
+    pin->state = gpiod_line_info_is_used(info);
+
+    const char *str = gpiod_line_info_get_consumer(info);
+    if (str) {
+        pin->consumer = mem_alloc(strlen(str) + 1);
+        if (!pin->consumer) {
+            gpiod_chip_close(chip);
+            gpiod_line_info_free(info);
+            return NULL;
+        }
+        strcpy(pin->consumer, str);
+    } else {
+        pin->consumer = NULL;
+    }
+
+    gpiod_chip_close(chip);
+    gpiod_line_info_free(info);
+
+    return pin;
 }
