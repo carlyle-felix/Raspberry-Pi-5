@@ -7,10 +7,16 @@
 #include "../include/raspin-manager.h"
 #include "../include/gpiod-utils.h"
 
+#define RED_BG      "\033[41m"
+#define DGRAY_BG    "\033[40m"
+#define GREEN       "\033[1;92m"
+#define DEFAULT     "\033[0m"
+
 struct line {
     uint8_t pin;
     int8_t gpio;
     char *line_fx;
+    bool state;
     char *consumer;
     struct line *next;
 };
@@ -87,6 +93,8 @@ Line_list get_line_info(const char *chip_dev, Line_list rpi)
             perror("failed to get line info in get_line_info()");
             return NULL;
         }
+
+        rpi_temp->state = pin->state;
         
         if (pin->consumer) {
             rpi_temp->consumer = malloc(strlen(pin->consumer) + 1);
@@ -137,7 +145,7 @@ Line_list populate_pins(void)
 
 void print_pins(const char *chip_dev, Line_list rpi, enum print format)
 {
-    Line_list temp;
+    Line_list rpi_temp;
     uint8_t count;
 
     rpi = get_line_info(chip_dev, rpi);
@@ -145,38 +153,78 @@ void print_pins(const char *chip_dev, Line_list rpi, enum print format)
     printf("\n");
     switch (format) {
         case PRINT_LIST:
-            printf(" pin\t gpio\t function\n\n");
-            for (temp = rpi; temp; temp = temp->next) {
-                if (temp->gpio >= 0 && temp->line_fx) {
-                    printf("%4.2d\t%4d\t%8s\t%s\n", temp->pin, temp->gpio, temp->line_fx, temp->consumer);
-                } else if (temp->gpio >= 0) {
-                    printf("%4.2d\t%4d\t%8s\t%s\n", temp->pin, temp->gpio, "---", temp->consumer);
-                } else if (temp->line_fx) {
-                    printf("%4.2d\t%4s\t%8s\t\n", temp->pin, "---", temp->line_fx);
+            printf(" pin\t gpio\t function\tconsumer\tstate\n\n");
+            for (rpi_temp = rpi; rpi_temp; rpi_temp = rpi_temp->next) {
+                printf(DEFAULT);
+                if (rpi_temp->state) {
+                    printf(GREEN);
+                }
+                if (rpi_temp->gpio >= 0 && rpi_temp->line_fx) {
+                    printf("%4.2d\t", rpi_temp->pin);
+                    printf("%4d\t", rpi_temp->gpio);
+                    printf("%8s\t", rpi_temp->line_fx);
+                    printf("%8s\t", rpi_temp->consumer);
+                    printf("%s\n", rpi_temp->state ? "used" : "not used");
+                } else if (rpi_temp->gpio >= 0) {
+                    printf("%4.2d\t", rpi_temp->pin);
+                    printf("%4d\t", rpi_temp->gpio);
+                    printf("%8s\t", "---");
+                    printf("%8s\t", rpi_temp->consumer);
+                    printf("%s\n", rpi_temp->state ? "used" : "not used");
+                } else if (rpi_temp->line_fx) {
+                    printf("%4.2d\t", rpi_temp->pin);
+                    printf("%4s\t", "---");
+                    printf("%8s\t", rpi_temp->line_fx);
+                    printf("%8s\t", "");
+                    printf("%s\n", rpi_temp->state ? "used" : "not used");
                 }
             }
             break;
 
         case PRINT_LAYOUT:
-            for(count = 0, temp = rpi; temp; temp = temp->next, count++) {
+            for(count = 0, rpi_temp = rpi; rpi_temp; rpi_temp = rpi_temp->next, count++) {
+                printf(DEFAULT);
+                if (rpi_temp->state) {
+                    printf(GREEN);
+                }
                 if (!(count % 2)) {
-                    if (temp->gpio >= 0 && temp->line_fx) {
-                        printf("%18s\tGPIO %2d\t[%.2d] ", temp->line_fx, temp->gpio, temp->pin);
-                    } else if (temp->gpio >= 0) {
-                        printf("\t\t\tGPIO %2d\t[%.2d] ", temp->gpio, temp->pin);
-                    } else if (temp->line_fx) {
-                        printf("%31s\t[%.2d] ", temp->line_fx, temp->pin);
+                    if (rpi_temp->gpio >= 0 && rpi_temp->line_fx) {
+                        printf("%18s\t", rpi_temp->line_fx);
+                        printf("GPIO %2d\t", rpi_temp->gpio);
+                        printf("[%.2d] ", rpi_temp->pin);
+                    } else if (rpi_temp->gpio >= 0) {
+                        printf("\t\t\tGPIO %2d\t", rpi_temp->gpio);
+                        printf("[%.2d] ", rpi_temp->pin);
+                    } else if (rpi_temp->line_fx) {
+                        printf("%31s\t", rpi_temp->line_fx);
+                        if (!strcmp(rpi_temp->line_fx, "GND")) {
+                            printf(DGRAY_BG);
+                        } else {
+                            printf(RED_BG);
+                        }
+                        printf("[%.2d]"DEFAULT" ", rpi_temp->pin);
                     }
                 } else {
-                    if (temp->gpio >= 0 && temp->line_fx) {
-                        printf("[%.2d] GPIO %2d      %s\n", temp->pin, temp->gpio, temp->line_fx);
-                    } else if (temp->gpio >= 0) {
-                        printf("[%.2d] GPIO %d\n", temp->pin, temp->gpio);
-                    } else if (temp->line_fx) {
-                        printf("[%.2d] %s\n", temp->pin, temp->line_fx);
+                    if (rpi_temp->gpio >= 0 && rpi_temp->line_fx) {
+                        printf("[%.2d] ", rpi_temp->pin);
+                        printf("GPIO %2d      ", rpi_temp->gpio);
+                        printf("%s\n", rpi_temp->line_fx);
+                    } else if (rpi_temp->gpio >= 0) {
+                        printf("[%.2d] ", rpi_temp->pin);
+                        printf("GPIO %d\n", rpi_temp->gpio);
+                    } else if (rpi_temp->line_fx) {
+                        if (!strcmp(rpi_temp->line_fx, "GND")) {
+                            printf(DGRAY_BG);
+                        } else {
+                            printf(RED_BG);
+                        }
+                        printf("[%.2d]", rpi_temp->pin);
+                        printf(DEFAULT);
+                        printf(" %s\n", rpi_temp->line_fx);
                     }
                 }
             }
+            printf(DEFAULT);
             break;
 
         default:
